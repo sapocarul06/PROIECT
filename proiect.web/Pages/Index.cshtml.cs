@@ -193,28 +193,41 @@ namespace proiect.web.Pages
                                 MealType = reader["meal_type"].ToString()
                             };
 
+                            // Re-generate the weekly plan from database to get current state
+                            // We need to reload the plan since this is a new request
+                            var weeklyPlan = new Dictionary<int, List<MealInfo>>();
+                            var daySummaries = new Dictionary<int, DaySummary>();
+                            
+                            GenerateMealPlanForSwap(weeklyPlan, daySummaries, DailyCalories, TargetProteins);
+                            
                             // Update the weekly plan
-                            if (WeeklyPlan.ContainsKey(day) && mealIndex >= 0 && mealIndex < WeeklyPlan[day].Count)
+                            if (weeklyPlan.ContainsKey(day) && mealIndex >= 0 && mealIndex < weeklyPlan[day].Count)
                             {
-                                WeeklyPlan[day][mealIndex] = newMeal;
+                                weeklyPlan[day][mealIndex] = newMeal;
 
                                 // Recalculate day summary
-                                double totalCalories = WeeklyPlan[day].Sum(m => m.Calories);
-                                double totalProtein = WeeklyPlan[day].Sum(m => m.Protein);
-                                DaySummaries[day] = new DaySummary
+                                double totalCalories = weeklyPlan[day].Sum(m => m.Calories);
+                                double totalProtein = weeklyPlan[day].Sum(m => m.Protein);
+                                daySummaries[day] = new DaySummary
                                 {
                                     TotalCalories = totalCalories,
                                     TotalProtein = totalProtein
                                 };
 
-                                // Regenerate PDF
+                                // Store updated plan in TempData for next request
+                                // For now, just return success and let the page reload regenerate everything
+                                
+                                // Regenerate PDF with updated plan
+                                WeeklyPlan = weeklyPlan;
+                                DaySummaries = daySummaries;
+                                
                                 try
                                 {
                                     GenerateReportPDF();
                                 }
                                 catch { }
 
-                                return new JsonResult(new { success = true, meal = newMeal, daySummary = DaySummaries[day], pdfUrl = PdfUrl });
+                                return new JsonResult(new { success = true, meal = newMeal, daySummary = daySummaries[day], pdfUrl = PdfUrl });
                             }
                         }
                     }
@@ -356,6 +369,101 @@ namespace proiect.web.Pages
                 catch (Exception ex)
                 {
                     ErrorMessage = $"Eroare la generarea planului: {ex.Message}";
+                }
+            }
+        }
+
+        private void GenerateMealPlanForSwap(Dictionary<int, List<MealInfo>> weeklyPlan, Dictionary<int, DaySummary> daySummaries, double dailyCalories, double targetProteins)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    var mealTypes = new[] { "mic_dejun", "pranz", "cina", "gustare" };
+                    var mealCalorieTargets = new Dictionary<string, double>
+                    {
+                        { "mic_dejun", dailyCalories * 0.25 },
+                        { "pranz", dailyCalories * 0.35 },
+                        { "cina", dailyCalories * 0.30 },
+                        { "gustare", dailyCalories * 0.10 }
+                    };
+
+                    for (int day = 1; day <= 7; day++)
+                    {
+                        var dayMeals = new List<MealInfo>();
+                        var usedFoodNames = new HashSet<string>();
+
+                        double dayTotalCalories = 0;
+                        double dayTotalProtein = 0;
+
+                        foreach (var mealType in mealTypes)
+                        {
+                            double targetCalories = mealCalorieTargets[mealType];
+                            double mealAccumulated = 0;
+                            int foodCount = 0;
+
+                            var foods = GetFoodsByMeal(connection, mealType, targetCalories);
+
+                            bool addedSomething = false;
+
+                            foreach (var meal in foods)
+                            {
+                                string currentName = meal.Name.ToLower();
+
+                                if (usedFoodNames.Any(x => IsSimilar(x, currentName)))
+                                    continue;
+
+                                double potentialTotal = dayTotalCalories + meal.Calories;
+
+                                if (potentialTotal > dailyCalories + 150)
+                                    break;
+
+                                dayMeals.Add(meal);
+                                usedFoodNames.Add(currentName);
+                                addedSomething = true;
+
+                                dayTotalCalories += meal.Calories;
+                                dayTotalProtein += meal.Protein;
+                                mealAccumulated += meal.Calories;
+                                foodCount++;
+
+                                if ((mealAccumulated >= targetCalories * 0.85 && mealAccumulated <= targetCalories) || foodCount >= 3)
+                                    break;
+                            }
+
+                            if (!addedSomething)
+                            {
+                                var fallback = GetAnyFood(connection, mealType);
+
+                                if (fallback != null)
+                                {
+                                    string fallbackName = fallback.Name.ToLower();
+
+                                    if (!usedFoodNames.Any(x => IsSimilar(x, fallbackName)))
+                                    {
+                                        dayMeals.Add(fallback);
+                                        usedFoodNames.Add(fallbackName);
+
+                                        dayTotalCalories += fallback.Calories;
+                                        dayTotalProtein += fallback.Protein;
+                                    }
+                                }
+                            }
+                        }
+
+                        weeklyPlan[day] = dayMeals;
+                        daySummaries[day] = new DaySummary
+                        {
+                            TotalCalories = dayTotalCalories,
+                            TotalProtein = dayTotalProtein
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue
                 }
             }
         }
