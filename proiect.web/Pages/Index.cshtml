@@ -250,7 +250,115 @@
             background: #218838;
         }
 
-        
+        .meal-item {
+            position: relative;
+            transition: background-color 0.2s;
+        }
+
+        .meal-item:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .btn-swap {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 8px;
+            transition: background 0.3s;
+            display: none;
+        }
+
+        .btn-swap:hover {
+            background: #ffca2c;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .alternative-option {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alternative-option:hover {
+            background: #f8f9ff;
+            border-color: #007bff;
+        }
+
+        .alternative-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .alternative-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .no-alternatives {
+            text-align: center;
+            color: #666;
+            padding: 20px;
         }
     </style>
 </head>
@@ -391,9 +499,17 @@
 
                                             @foreach (var meal in group)
                                             {
-                                                <div class="meal-item">
+                                                <div class="meal-item" 
+                                                     data-food-id="@meal.Id" 
+                                                     data-day="@day" 
+                                                     data-meal-index="@WeeklyPlan[day].IndexOf(meal)"
+                                                     onmouseenter="showSwapButton(this)" 
+                                                     onmouseleave="hideSwapButton(this)">
                                                     <div class="meal-name">@meal.Name</div>
                                                     <div class="meal-details">@meal.Calories.ToString("F0") kcal | @meal.Protein.ToString("F1")g proteina</div>
+                                                    <button class="btn-swap" onclick="openSwapModal(@meal.Id, '@meal.MealType', @day, @WeeklyPlan[day].IndexOf(meal))" style="display:none;">
+                                                        🔄 Nu îmi place, altceva
+                                                    </button>
                                                 </div>
                                             }
 
@@ -417,6 +533,110 @@
             }
         </div>
     }
+
+    <!-- Modal pentru înlocuire alimente -->
+    <div id="swapModal" class="modal-overlay" onclick="closeSwapModal(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔄 Alege o alternativă</h3>
+                <button class="modal-close" onclick="closeSwapModalDirect()">&times;</button>
+            </div>
+            <div id="alternativesList">
+                <p class="no-alternatives">Se încarcă alternativele...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDay = null;
+        let currentMealIndex = null;
+        let currentFoodId = null;
+
+        function showSwapButton(element) {
+            const btn = element.querySelector('.btn-swap');
+            if (btn) btn.style.display = 'block';
+        }
+
+        function hideSwapButton(element) {
+            const btn = element.querySelector('.btn-swap');
+            if (btn) btn.style.display = 'none';
+        }
+
+        async function openSwapModal(foodId, mealType, day, mealIndex) {
+            currentFoodId = foodId;
+            currentDay = day;
+            currentMealIndex = mealIndex;
+
+            const modal = document.getElementById('swapModal');
+            const alternativesList = document.getElementById('alternativesList');
+
+            modal.style.display = 'flex';
+            alternativesList.innerHTML = '<p class="no-alternatives">Se încarcă alternativele...</p>';
+
+            try {
+                const response = await fetch(`?handler=Alternatives&foodId=${foodId}&mealType=${mealType}`);
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    alternativesList.innerHTML = '';
+                    data.forEach(alt => {
+                        const option = document.createElement('div');
+                        option.className = 'alternative-option';
+                        option.onclick = () => selectAlternative(alt.id);
+                        option.innerHTML = `
+                            <div class="alternative-name">${alt.name}</div>
+                            <div class="alternative-details">${alt.calories.toFixed(0)} kcal | ${alt.protein.toFixed(1)}g proteina</div>
+                        `;
+                        alternativesList.appendChild(option);
+                    });
+                } else {
+                    alternativesList.innerHTML = '<p class="no-alternatives">Nu există alternative disponibile pentru acest aliment.</p>';
+                }
+            } catch (error) {
+                alternativesList.innerHTML = '<p class="no-alternatives">Eroare la încărcarea alternativelor.</p>';
+                console.error('Error:', error);
+            }
+        }
+
+        function closeSwapModal(event) {
+            if (event.target === document.getElementById('swapModal')) {
+                document.getElementById('swapModal').style.display = 'none';
+            }
+        }
+
+        function closeSwapModalDirect() {
+            document.getElementById('swapModal').style.display = 'none';
+        }
+
+        async function selectAlternative(newFoodId) {
+            try {
+                const formData = new FormData();
+                formData.append('day', currentDay);
+                formData.append('mealIndex', currentMealIndex);
+                formData.append('newFoodId', newFoodId);
+
+                const response = await fetch('?handler=SwapFood', {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Reîncarcă pagina pentru a actualiza planul
+                    location.reload();
+                } else {
+                    alert('Eroare: ' + (result.error || 'Nu s-a putut înlocui alimentul.'));
+                }
+            } catch (error) {
+                alert('Eroare la înlocuirea alimentului.');
+                console.error('Error:', error);
+            }
+        }
+    </script>
 
 </body>
 </html>
