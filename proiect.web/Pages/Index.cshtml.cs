@@ -10,6 +10,9 @@ using System.Net.Mail;
 using System.Reflection.Metadata;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace proiect.web.Pages
 {
@@ -60,15 +63,30 @@ namespace proiect.web.Pages
         public void OnGet()
         {
             // Restore meal plan from TempData if available (after swap operation)
-            if (TempData["WeeklyPlan"] != null)
+            var weeklyPlanJson = TempData["WeeklyPlan"] as string;
+            var daySummariesJson = TempData["DaySummaries"] as string;
+            
+            if (!string.IsNullOrEmpty(weeklyPlanJson))
             {
-                WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(TempData["WeeklyPlan"].ToString());
-                DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(TempData["DaySummaries"].ToString());
-                DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
-                TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
-                HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
-                ResultSummary = TempData["ResultSummary"].ToString();
-                PdfUrl = TempData["PdfUrl"].ToString();
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    ReadNumberHandling = System.Text.Json.JsonNumberHandling.AllowReadingFromString
+                };
+                
+                WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(weeklyPlanJson, options);
+                DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(daySummariesJson, options);
+                
+                if (TempData["DailyCalories"] != null)
+                    DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
+                if (TempData["TargetProteins"] != null)
+                    TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
+                if (TempData["HasCalculated"] != null)
+                    HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
+                if (TempData["ResultSummary"] != null)
+                    ResultSummary = TempData["ResultSummary"].ToString();
+                if (TempData["PdfUrl"] != null)
+                    PdfUrl = TempData["PdfUrl"].ToString();
             }
         }
 
@@ -175,8 +193,14 @@ namespace proiect.web.Pages
             }
 
             // Save the meal plan to TempData for later use in swap operations
-            TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
-            TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = false,
+                PropertyNamingPolicy = null
+            };
+            
+            TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan, jsonOptions);
+            TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries, jsonOptions);
             TempData["DailyCalories"] = dailyCalories.ToString();
             TempData["TargetProteins"] = TargetProteins.ToString();
             TempData["HasCalculated"] = true;
@@ -200,13 +224,26 @@ namespace proiect.web.Pages
             try
             {
                 // Restore meal plan from TempData first
-                if (TempData["WeeklyPlan"] != null)
+                var weeklyPlanJson = TempData["WeeklyPlan"] as string;
+                var daySummariesJson = TempData["DaySummaries"] as string;
+                
+                if (!string.IsNullOrEmpty(weeklyPlanJson))
                 {
-                    WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(TempData["WeeklyPlan"].ToString());
-                    DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(TempData["DaySummaries"].ToString());
-                    DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
-                    TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
-                    HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
+                    var jsonOptions = new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        ReadNumberHandling = System.Text.Json.JsonNumberHandling.AllowReadingFromString
+                    };
+                    
+                    WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(weeklyPlanJson, jsonOptions);
+                    DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(daySummariesJson, jsonOptions);
+                    
+                    if (TempData["DailyCalories"] != null)
+                        DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
+                    if (TempData["TargetProteins"] != null)
+                        TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
+                    if (TempData["HasCalculated"] != null)
+                        HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
                     ResultSummary = TempData["ResultSummary"]?.ToString() ?? "";
                     PdfUrl = TempData["PdfUrl"]?.ToString() ?? "";
                 }
@@ -295,8 +332,14 @@ namespace proiect.web.Pages
                                     catch { }
 
                                     // Save updated plan to TempData
-                                    TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
-                                    TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
+                                    var saveJsonOptions = new System.Text.Json.JsonSerializerOptions
+                                    {
+                                        WriteIndented = false,
+                                        PropertyNamingPolicy = null
+                                    };
+                                    
+                                    TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan, saveJsonOptions);
+                                    TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries, saveJsonOptions);
                                     TempData["DailyCalories"] = dailyCalories.ToString();
                                     TempData["TargetProteins"] = targetProteins.ToString();
                                     TempData["HasCalculated"] = true;
