@@ -67,8 +67,17 @@ namespace proiect.web.Pages
                 DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
                 TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
                 HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
-                ResultSummary = TempData["ResultSummary"].ToString();
-                PdfUrl = TempData["PdfUrl"].ToString();
+                ResultSummary = TempData["ResultSummary"]?.ToString() ?? "";
+                PdfUrl = TempData["PdfUrl"]?.ToString() ?? "";
+                
+                // Keep TempData for subsequent requests (like AJAX swap operations)
+                TempData.Keep("WeeklyPlan");
+                TempData.Keep("DaySummaries");
+                TempData.Keep("DailyCalories");
+                TempData.Keep("TargetProteins");
+                TempData.Keep("HasCalculated");
+                TempData.Keep("ResultSummary");
+                TempData.Keep("PdfUrl");
             }
         }
 
@@ -294,7 +303,7 @@ namespace proiect.web.Pages
                                     }
                                     catch { }
 
-                                    // Save updated plan to TempData
+                                    // Save updated plan to TempData and keep it for subsequent requests
                                     TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
                                     TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
                                     TempData["DailyCalories"] = dailyCalories.ToString();
@@ -302,6 +311,15 @@ namespace proiect.web.Pages
                                     TempData["HasCalculated"] = true;
                                     TempData["ResultSummary"] = ResultSummary;
                                     TempData["PdfUrl"] = PdfUrl;
+                                    
+                                    // Keep TempData for subsequent AJAX requests
+                                    TempData.Keep("WeeklyPlan");
+                                    TempData.Keep("DaySummaries");
+                                    TempData.Keep("DailyCalories");
+                                    TempData.Keep("TargetProteins");
+                                    TempData.Keep("HasCalculated");
+                                    TempData.Keep("ResultSummary");
+                                    TempData.Keep("PdfUrl");
 
                                     return new JsonResult(new { success = true, meal = newMeal, daySummary = DaySummaries[day], pdfUrl = PdfUrl });
                                 }
