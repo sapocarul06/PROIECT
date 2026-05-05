@@ -6,9 +6,11 @@ obj/
 *.exe
 *.pdb
 *.config
+*.csproj.user
 
 # Dependencies
 packages/
+node_modules/
 
 # Logs
 *.log
@@ -21,12 +23,12 @@ packages/
 # Editors
 .vscode/
 .idea/
+*.suo
 *.user
 *.userosscache
-*.suo
-*.csproj.user
+*.sln.docstates
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
 ```

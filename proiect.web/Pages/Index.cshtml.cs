@@ -146,7 +146,16 @@ namespace proiect.web.Pages
             }
 
             // Generate meal plan from database
-            GenerateMealPlan(dailyCalories);
+            try
+            {
+                GenerateMealPlan(dailyCalories);
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Eroare la generarea planului: {ex.Message}";
+                HasCalculated = false;
+                return Page();
+            }
 
             if (WeeklyPlan.Count == 0)
             {
@@ -348,11 +357,22 @@ namespace proiect.web.Pages
 
         private void GenerateMealPlan(double dailyCalories)
         {
+            // Clear existing plan before generating new one
+            WeeklyPlan.Clear();
+            DaySummaries.Clear();
+            
             using (var connection = new SqlConnection(_connectionString))
             {
                 try
                 {
                     connection.Open();
+
+                    // Verify database connection
+                    if (connection.State != System.Data.ConnectionState.Open)
+                    {
+                        ErrorMessage = "Nu s-a putut conecta la baza de date!";
+                        return;
+                    }
 
                     var mealTypes = new[] { "mic_dejun", "pranz", "cina", "gustare" };
                     var mealCalorieTargets = new Dictionary<string, double>
@@ -437,6 +457,7 @@ namespace proiect.web.Pages
                 catch (Exception ex)
                 {
                     ErrorMessage = $"Eroare la generarea planului: {ex.Message}";
+                    throw; // Re-throw to be caught by the caller
                 }
             }
         }
@@ -805,7 +826,8 @@ namespace proiect.web.Pages
             }
             catch (Exception ex)
             {
-                throw new Exception($"Eroare la crearea PDF: {ex.Message}", ex);
+                ErrorMessage = $"Eroare la crearea PDF: {ex.Message}";
+                PdfUrl = string.Empty;
             }
         }
 
