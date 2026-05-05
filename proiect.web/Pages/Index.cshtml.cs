@@ -57,7 +57,7 @@ namespace proiect.web.Pages
         {
         }
 
-        public void OnPost()
+        public IActionResult OnPostGeneratePlan()
         {
             HasCalculated = true;
             ErrorMessage = "";
@@ -66,7 +66,7 @@ namespace proiect.web.Pages
             {
                 ErrorMessage = "Date invalide!";
                 HasCalculated = false;
-                return;
+                return Page();
             }
 
             // Step 1: Calculate BMR using Mifflin-St Jeor formula
@@ -135,7 +135,7 @@ namespace proiect.web.Pages
             if (WeeklyPlan.Count == 0)
             {
                 ErrorMessage = "Nu s-au gasit alimente in baza de date. Importa mai intai alimentele!";
-                return;
+                return Page();
             }
 
             // Generate PDF Report after meal plan is created
@@ -150,6 +150,7 @@ namespace proiect.web.Pages
             }
 
             MessageResult = $"Planul tau alimentar personalizat a fost generat!";
+            return Page();
         }
 
         private double CalculateBMR(string sex, double weight, int height, int age)
@@ -509,6 +510,12 @@ namespace proiect.web.Pages
             catch (Exception ex)
             {
                 EmailErrorMessage = $"Eroare la trimiterea email-ului: {ex.Message}";
+            }
+
+            // Dupa trimiterea email-ului, afiseaza din nou planul alimentar daca exista
+            if (HasCalculated)
+            {
+                OnPost();
             }
 
             return Page();
