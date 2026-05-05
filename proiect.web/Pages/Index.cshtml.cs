@@ -72,6 +72,7 @@ namespace proiect.web.Pages
             }
         }
 
+        [ValidateAntiForgeryToken]
         public IActionResult OnPostGeneratePlan()
         {
             HasCalculated = true;
@@ -796,6 +797,7 @@ namespace proiect.web.Pages
             }
         }
 
+        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> OnPostSendEmail()
         {
             EmailErrorMessage = "";
@@ -840,9 +842,28 @@ namespace proiect.web.Pages
             }
 
             // Dupa trimiterea email-ului, afiseaza din nou planul alimentar daca exista
+            // Nu regeneram planul, doar il afisam pe cel existent din TempData
             if (HasCalculated)
             {
-                return OnPostGeneratePlan();
+                // Restore data from TempData to show the existing plan
+                if (TempData["WeeklyPlan"] != null)
+                {
+                    WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(TempData["WeeklyPlan"].ToString());
+                    DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(TempData["DaySummaries"].ToString());
+                    DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
+                    TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
+                    ResultSummary = TempData["ResultSummary"].ToString();
+                    PdfUrl = TempData["PdfUrl"].ToString();
+                    
+                    // Re-save to TempData since reading it removes it
+                    TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
+                    TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
+                    TempData["DailyCalories"] = DailyCalories;
+                    TempData["TargetProteins"] = TargetProteins;
+                    TempData["HasCalculated"] = true;
+                    TempData["ResultSummary"] = ResultSummary;
+                    TempData["PdfUrl"] = PdfUrl;
+                }
             }
 
             return Page();
