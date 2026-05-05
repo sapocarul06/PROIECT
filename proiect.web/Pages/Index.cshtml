@@ -1,0 +1,422 @@
+﻿@page
+@model proiect.web.Pages.IndexModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Plan Alimentar Personalizat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: url('/pozaBackgroundSite.png') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.80);
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #1c1c1c;
+            margin-top: 60px;
+        }
+
+        .card h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            color: #333;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: #fff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: #999;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            border-radius: 4px;
+            color: #155724;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.80);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 900px;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .meal-plan-title {
+            text-align: center;
+            font-size: 26px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .week-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .day-card {
+            background: #fff;
+            border-left: 4px solid #007bff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .day-card h3 {
+            color: #007bff;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meal-group {
+            margin-bottom: 20px;
+        }
+
+        .meal-group-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .meal-item {
+            margin-bottom: 12px;
+            padding-left: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .meal-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .meal-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .meal-details {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .day-summary {
+            background: #f8f9ff;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #007bff;
+            font-size: 14px;
+        }
+
+        .btn-download {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+        }
+
+        
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>⚙️ Seteaza Obiectivul Tau</h2>
+
+        <form method="post">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Sex</label>
+                    <select asp-for="Sex">
+                        <option value="M">Masculin</option>
+                        <option value="F">Feminin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Varsta (ani)</label>
+                    <input asp-for="Varsta" type="number" placeholder="25" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Greutate Actuala (kg)</label>
+                    <input asp-for="Greutate" type="number" placeholder="85" />
+                </div>
+                <div class="form-group">
+                    <label>Inaltime (cm)</label>
+                    <input asp-for="Inaltime" type="number" placeholder="180" />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nivel de Activitate</label>
+                    <select asp-for="Activitate">
+                        <option value="sedentar">🪑 Sedentar (putin exercitiu)</option>
+                        <option value="usoareactiv">🚶 Usor activ (1-3 zile/saptamana)</option>
+                        <option value="moderat" >🏃 Moderat activ (3-5 zile/saptamana)</option>
+                        <option value="activ">💪 Foarte activ (6-7 zile/saptamana)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Obiectiv</label> 
+                    <select asp-for="Obiectiv">
+                        <option value="mentime">🎯 Sa-mi mentin greutatea</option>
+                        <option value="slabire_usoara">📉 Slabire usoara (300 kcal deficit)</option>
+                        <option value="slabire_normala">📉📉 Slabire normala (500 kcal deficit)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn" type="submit">🍽️ Genereaza Plan Alimentar</button>
+
+        </form>
+        <form method="post" asp-page-handler="SendEmail">
+            <div class="form-group" style="margin-top:20px;">
+                <label>📧 Vrei sa fii la curent cu toate noutatile noastre?</label>
+                <input asp-for="EmailDestinatar" type="email" placeholder="ex: nume@email.com" />
+            </div>
+
+            <button class="btn" type="submit">📨 Trimite Email</button>
+        </form>
+        @if (!string.IsNullOrEmpty(Model.MessageResult))
+        {
+            <div class="result">@Model.MessageResult</div>
+        }
+
+        <!-- Erori pentru Plan Alimentar -->
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage) && !Model.HasCalculated)
+        {
+            <div class="result error">@Model.ErrorMessage</div>
+        }
+
+        <!-- Erori pentru Email (SEPARATE) -->
+        @if (!string.IsNullOrEmpty(Model.EmailErrorMessage))
+        {
+            <div class="result error">@Model.EmailErrorMessage</div>
+        }
+    </div>
+
+    @if (Model.HasCalculated)
+    {
+        <div class="result-card">
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="result error">@Model.ErrorMessage</div>
+            }
+            else
+            {
+                <div class="result">@Html.Raw(Model.ResultSummary)</div>
+
+                @if (Model.WeeklyPlan.Count > 0)
+                {
+                    @if (!string.IsNullOrEmpty(Model.PdfUrl))
+                    {
+                        <p style="text-align: center; margin: 20px 0;">
+                            <a href="@Model.PdfUrl" class="btn-download" target="_blank" download>
+                                📥 Descarca Raport PDF
+                            </a>
+                        </p>
+                    }
+
+                    <div class="meal-plan-title">📅 Planul tau alimentar pe 7 zile</div>
+
+                    <div class="week-container">
+                        @for (int day = 1; day <= 7; day++)
+                        {
+                            if (Model.WeeklyPlan.ContainsKey(day))
+                            {
+                                var dayMeals = Model.WeeklyPlan[day];
+                                var daySummary = Model.DaySummaries[day];
+                                var dayNames = new[] { "", "Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica" };
+
+                                <div class="day-card">
+                                    <h3>Ziua @day - @dayNames[day]</h3>
+
+                                    @{
+                                        var mealGroups = dayMeals
+                                            .GroupBy(m => m.MealType)
+                                            .OrderBy(g => new[] { "mic_dejun", "pranz", "cina", "gustare" }.IndexOf(g.Key));
+                                    }
+
+                                    @foreach (var group in mealGroups)
+                                    {
+                                        var firstMeal = group.First();
+                                        var mealLabel = firstMeal.GetMealLabel();
+                                        var mealEmoji = firstMeal.GetMealEmoji();
+                                        var groupTotal = group.Sum(m => m.Calories);
+                                        var groupProtein = group.Sum(m => m.Protein);
+
+                                        <div class="meal-group">
+                                            <div class="meal-group-title">
+                                                <span>@mealEmoji @mealLabel</span>
+                                            </div>
+
+                                            @foreach (var meal in group)
+                                            {
+                                                <div class="meal-item">
+                                                    <div class="meal-name">@meal.Name</div>
+                                                    <div class="meal-details">@meal.Calories.ToString("F0") kcal | @meal.Protein.ToString("F1")g proteina</div>
+                                                </div>
+                                            }
+
+                                            <div style="padding-left: 10px; font-size: 12px; font-weight: bold; color: #007bff; margin-bottom: 10px;">
+                                                Subtotal: @groupTotal.ToString("F0") kcal | @groupProtein.ToString("F1")g proteina
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="day-summary">
+                                        Total: @daySummary.TotalCalories.ToString("F0") kcal | @daySummary.TotalProtein.ToString("F1")g proteina
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+
+
+            }
+        </div>
+    }
+
+</body>
+</html>
