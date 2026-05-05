@@ -165,7 +165,7 @@ namespace proiect.web.Pages
         }
 
         [IgnoreAntiforgeryToken]
-        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId)
+        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId, int originalFoodId)
         {
             try
             {
@@ -200,34 +200,55 @@ namespace proiect.web.Pages
                             
                             GenerateMealPlanForSwap(weeklyPlan, daySummaries, DailyCalories, TargetProteins);
                             
-                            // Update the weekly plan
-                            if (weeklyPlan.ContainsKey(day) && mealIndex >= 0 && mealIndex < weeklyPlan[day].Count)
+                            // Find the food by its ID and replace it
+                            // This ensures we replace the correct food even if the order changed
+                            if (weeklyPlan.ContainsKey(day))
                             {
-                                weeklyPlan[day][mealIndex] = newMeal;
-
-                                // Recalculate day summary
-                                double totalCalories = weeklyPlan[day].Sum(m => m.Calories);
-                                double totalProtein = weeklyPlan[day].Sum(m => m.Protein);
-                                daySummaries[day] = new DaySummary
-                                {
-                                    TotalCalories = totalCalories,
-                                    TotalProtein = totalProtein
-                                };
-
-                                // Store updated plan in TempData for next request
-                                // For now, just return success and let the page reload regenerate everything
+                                var dayMeals = weeklyPlan[day];
+                                int foundIndex = -1;
                                 
-                                // Regenerate PDF with updated plan
-                                WeeklyPlan = weeklyPlan;
-                                DaySummaries = daySummaries;
-                                
-                                try
+                                // Search for the original food by ID
+                                for (int i = 0; i < dayMeals.Count; i++)
                                 {
-                                    GenerateReportPDF();
+                                    if (dayMeals[i].Id == originalFoodId)
+                                    {
+                                        foundIndex = i;
+                                        break;
+                                    }
                                 }
-                                catch { }
+                                
+                                // If not found by ID, try using the mealIndex as fallback
+                                if (foundIndex == -1 && mealIndex >= 0 && mealIndex < dayMeals.Count)
+                                {
+                                    foundIndex = mealIndex;
+                                }
+                                
+                                if (foundIndex >= 0 && foundIndex < dayMeals.Count)
+                                {
+                                    // Replace the food at the found index with the new food
+                                    dayMeals[foundIndex] = newMeal;
 
-                                return new JsonResult(new { success = true, meal = newMeal, daySummary = daySummaries[day], pdfUrl = PdfUrl });
+                                    // Recalculate day summary
+                                    double totalCalories = dayMeals.Sum(m => m.Calories);
+                                    double totalProtein = dayMeals.Sum(m => m.Protein);
+                                    daySummaries[day] = new DaySummary
+                                    {
+                                        TotalCalories = totalCalories,
+                                        TotalProtein = totalProtein
+                                    };
+
+                                    // Store updated plan
+                                    WeeklyPlan = weeklyPlan;
+                                    DaySummaries = daySummaries;
+                                    
+                                    try
+                                    {
+                                        GenerateReportPDF();
+                                    }
+                                    catch { }
+
+                                    return new JsonResult(new { success = true, meal = newMeal, daySummary = daySummaries[day], pdfUrl = PdfUrl });
+                                }
                             }
                         }
                     }

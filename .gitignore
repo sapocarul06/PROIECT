@@ -1,11 +1,13 @@
+```
 # Build artifacts
 bin/
 obj/
 *.dll
 *.exe
 *.pdb
-*.config
-*.csproj.user
+*.nupkg
+**/Debug/
+**/Release/
 
 # Dependencies
 packages/
@@ -14,25 +16,17 @@ node_modules/
 # Logs
 *.log
 
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+*.userprefs
+
 # OS generated files
 .DS_Store
 Thumbs.db
-
-# User-specific files
-.vs/
-.idea/
-*.userprefs
-*.suo
-*.user
-*.aps
-*.ncb
-*.opendb
-*.opensdf
-
-# Environment specific
-.env
-.env.local
-.env.*
-
-# Test results
-TestResults/
+```

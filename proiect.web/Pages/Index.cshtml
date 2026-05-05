@@ -625,6 +625,7 @@
                 formData.append('day', currentDay);
                 formData.append('mealIndex', currentMealIndex);
                 formData.append('newFoodId', newFoodId);
+                formData.append('originalFoodId', currentFoodId);
 
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 const response = await fetch('?handler=SwapFood', {
