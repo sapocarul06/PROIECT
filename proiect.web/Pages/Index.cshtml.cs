@@ -190,6 +190,18 @@ namespace proiect.web.Pages
         {
             try
             {
+                // Restore meal plan from TempData first
+                if (TempData["WeeklyPlan"] != null)
+                {
+                    WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(TempData["WeeklyPlan"].ToString());
+                    DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(TempData["DaySummaries"].ToString());
+                    DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
+                    TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
+                    HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
+                    ResultSummary = TempData["ResultSummary"]?.ToString() ?? "";
+                    PdfUrl = TempData["PdfUrl"]?.ToString() ?? "";
+                }
+                
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     connection.Open();

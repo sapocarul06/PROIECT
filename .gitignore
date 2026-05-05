@@ -6,12 +6,9 @@ obj/
 *.exe
 *.pdb
 *.config
-*.manifest
-*.nupkg
 
 # Dependencies
 packages/
-node_modules/
 
 # Logs
 *.log
@@ -24,8 +21,10 @@ node_modules/
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
+*.user
+*.userosscache
+*.suo
+*.csproj.user
 
 # OS generated files
 .DS_Store
