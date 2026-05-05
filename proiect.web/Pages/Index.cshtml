@@ -447,7 +447,7 @@
     @if (Model.HasCalculated)
     {
         <!-- CSRF Token pentru request-uri AJAX -->
-        <input type="hidden" id="csrfToken" value="@Model.HttpContext.Antiforgery.GetAndStoreTokens(Model.HttpContext).RequestToken" />
+        <input type="hidden" id="csrfToken" name="__RequestVerificationToken" value="@Html.AntiForgeryToken().ToString()" />
         
         <div class="result-card">
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -580,7 +580,12 @@
             alternativesList.innerHTML = '<p class="no-alternatives">Se încarcă alternativele...</p>';
 
             try {
-                const response = await fetch(`?handler=Alternatives&foodId=${foodId}&mealType=${mealType}`);
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const response = await fetch(`?handler=Alternatives&foodId=${foodId}&mealType=${mealType}`, {
+                    headers: {
+                        'RequestVerificationToken': csrfToken || ''
+                    }
+                });
                 const data = await response.json();
 
                 if (data && data.length > 0) {
@@ -621,10 +626,11 @@
                 formData.append('mealIndex', currentMealIndex);
                 formData.append('newFoodId', newFoodId);
 
+                const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 const response = await fetch('?handler=SwapFood', {
                     method: 'POST',
                     headers: {
-                        'RequestVerificationToken': document.getElementById('csrfToken').value
+                        'RequestVerificationToken': csrfToken || ''
                     },
                     body: formData
                 });

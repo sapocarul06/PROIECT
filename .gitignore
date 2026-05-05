@@ -6,6 +6,9 @@ obj/
 *.exe
 *.pdb
 *.config
+*.csproj.user
+*.userosscache
+*.sln.docstates
 
 # Dependencies
 packages/
@@ -25,16 +28,7 @@ node_modules/
 *.swp
 *.swo
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
-
-# User-specific files
-.vs/
-*.user
-*.userosscache
-*.suo
-
-# Web files
-wwwroot/
 ```
