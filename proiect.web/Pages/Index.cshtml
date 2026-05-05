@@ -648,14 +648,65 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Reîncarcă pagina pentru a actualiza planul
-                    location.reload();
+                    // Update the page dynamically without full reload
+                    updateMealInPage(currentDay, currentMealIndex, result.meal, result.daySummary);
+                    document.getElementById('swapModal').style.display = 'none';
                 } else {
                     alert('Eroare: ' + (result.error || 'Nu s-a putut înlocui alimentul.'));
                 }
             } catch (error) {
                 alert('Eroare la înlocuirea alimentului.');
                 console.error('Error:', error);
+            }
+        }
+
+        function updateMealInPage(day, mealIndex, newMeal, daySummary) {
+            // Find the day card
+            const dayCards = document.querySelectorAll('.day-card');
+            let targetDayCard = null;
+            
+            for (const card of dayCards) {
+                const heading = card.querySelector('h3');
+                if (heading && heading.textContent.includes(`Ziua ${day}`)) {
+                    targetDayCard = card;
+                    break;
+                }
+            }
+            
+            if (!targetDayCard) return;
+            
+            // Find all meal items in this day
+            const mealItems = targetDayCard.querySelectorAll('.meal-item');
+            if (mealItems.length > mealIndex) {
+                const targetMealItem = mealItems[mealIndex];
+                
+                // Update the food ID data attribute
+                targetMealItem.setAttribute('data-food-id', newMeal.id);
+                
+                // Update the meal name
+                const nameElement = targetMealItem.querySelector('.meal-name');
+                if (nameElement) {
+                    nameElement.textContent = newMeal.name;
+                }
+                
+                // Update the meal details (calories and protein)
+                const detailsElement = targetMealItem.querySelector('.meal-details');
+                if (detailsElement) {
+                    detailsElement.textContent = `${Math.round(newMeal.calories)} kcal | ${newMeal.protein.toFixed(1)}g proteina`;
+                }
+                
+                // Update the swap button onclick handler with new food ID
+                const swapButton = targetMealItem.querySelector('.btn-swap');
+                if (swapButton) {
+                    const mealType = newMeal.meal_type || currentMealType;
+                    swapButton.setAttribute('onclick', `openSwapModal(${newMeal.id}, '${mealType}', ${day}, ${mealIndex})`);
+                }
+            }
+            
+            // Update day summary
+            const summaryElement = targetDayCard.querySelector('.day-summary');
+            if (summaryElement && daySummary) {
+                summaryElement.textContent = `Total Ziua ${day}: ${Math.round(daySummary.totalCalories)} kcal | ${daySummary.totalProtein.toFixed(1)}g proteina`;
             }
         }
     </script>

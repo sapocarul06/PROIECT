@@ -7,8 +7,6 @@ obj/
 *.pdb
 *.config
 *.csproj.user
-*.userosscache
-*.sln.docstates
 
 # Dependencies
 packages/
@@ -25,10 +23,12 @@ node_modules/
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
-# OS generated files
+# OS
 .DS_Store
 Thumbs.db
 ```
