@@ -557,6 +557,7 @@
         let currentDay = null;
         let currentMealIndex = null;
         let currentFoodId = null;
+        let currentMealType = null;
 
         function showSwapButton(element) {
             const btn = element.querySelector('.btn-swap');
@@ -572,6 +573,7 @@
             currentFoodId = foodId;
             currentDay = day;
             currentMealIndex = mealIndex;
+            currentMealType = mealType;
 
             const modal = document.getElementById('swapModal');
             const alternativesList = document.getElementById('alternativesList');
@@ -626,6 +628,7 @@
                 formData.append('mealIndex', currentMealIndex);
                 formData.append('newFoodId', newFoodId);
                 formData.append('originalFoodId', currentFoodId);
+                formData.append('mealType', currentMealType);
 
                 const csrfToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 const response = await fetch('?handler=SwapFood', {

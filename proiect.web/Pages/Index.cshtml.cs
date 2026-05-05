@@ -165,7 +165,7 @@ namespace proiect.web.Pages
         }
 
         [IgnoreAntiforgeryToken]
-        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId, int originalFoodId)
+        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId, int originalFoodId, string mealType)
         {
             try
             {
@@ -193,21 +193,13 @@ namespace proiect.web.Pages
                                 MealType = reader["meal_type"].ToString()
                             };
 
-                            // Re-generate the weekly plan from database to get current state
-                            // We need to reload the plan since this is a new request
-                            var weeklyPlan = new Dictionary<int, List<MealInfo>>();
-                            var daySummaries = new Dictionary<int, DaySummary>();
-                            
-                            GenerateMealPlanForSwap(weeklyPlan, daySummaries, DailyCalories, TargetProteins);
-                            
-                            // Find the food by its ID and replace it
-                            // This ensures we replace the correct food even if the order changed
-                            if (weeklyPlan.ContainsKey(day))
+                            // Find and replace the food directly in the existing WeeklyPlan
+                            if (WeeklyPlan.ContainsKey(day))
                             {
-                                var dayMeals = weeklyPlan[day];
+                                var dayMeals = WeeklyPlan[day];
                                 int foundIndex = -1;
                                 
-                                // Search for the original food by ID
+                                // First try to find by originalFoodId
                                 for (int i = 0; i < dayMeals.Count; i++)
                                 {
                                     if (dayMeals[i].Id == originalFoodId)
@@ -217,7 +209,7 @@ namespace proiect.web.Pages
                                     }
                                 }
                                 
-                                // If not found by ID, try using the mealIndex as fallback
+                                // If not found by ID, try to find by mealIndex as fallback
                                 if (foundIndex == -1 && mealIndex >= 0 && mealIndex < dayMeals.Count)
                                 {
                                     foundIndex = mealIndex;
@@ -231,15 +223,11 @@ namespace proiect.web.Pages
                                     // Recalculate day summary
                                     double totalCalories = dayMeals.Sum(m => m.Calories);
                                     double totalProtein = dayMeals.Sum(m => m.Protein);
-                                    daySummaries[day] = new DaySummary
+                                    DaySummaries[day] = new DaySummary
                                     {
                                         TotalCalories = totalCalories,
                                         TotalProtein = totalProtein
                                     };
-
-                                    // Store updated plan
-                                    WeeklyPlan = weeklyPlan;
-                                    DaySummaries = daySummaries;
                                     
                                     try
                                     {
@@ -247,7 +235,7 @@ namespace proiect.web.Pages
                                     }
                                     catch { }
 
-                                    return new JsonResult(new { success = true, meal = newMeal, daySummary = daySummaries[day], pdfUrl = PdfUrl });
+                                    return new JsonResult(new { success = true, meal = newMeal, daySummary = DaySummaries[day], pdfUrl = PdfUrl });
                                 }
                             }
                         }
