@@ -153,6 +153,75 @@ namespace proiect.web.Pages
             return Page();
         }
 
+        public JsonResult OnGetAlternatives(int foodId, string mealType)
+        {
+            var alternatives = GetAlternativeFoods(foodId, mealType);
+            return new JsonResult(alternatives);
+        }
+
+        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    
+                    // Get the new food details
+                    var command = new SqlCommand(
+                        @"SELECT id, name, calories, protein, meal_type 
+                          FROM foods 
+                          WHERE id = @Id", connection);
+                    command.Parameters.AddWithValue("@Id", newFoodId);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            var newMeal = new MealInfo
+                            {
+                                Id = (int)reader["id"],
+                                Name = reader["name"].ToString(),
+                                Calories = double.Parse(reader["calories"].ToString()),
+                                Protein = double.Parse(reader["protein"].ToString()),
+                                MealType = reader["meal_type"].ToString()
+                            };
+
+                            // Update the weekly plan
+                            if (WeeklyPlan.ContainsKey(day) && mealIndex >= 0 && mealIndex < WeeklyPlan[day].Count)
+                            {
+                                WeeklyPlan[day][mealIndex] = newMeal;
+
+                                // Recalculate day summary
+                                double totalCalories = WeeklyPlan[day].Sum(m => m.Calories);
+                                double totalProtein = WeeklyPlan[day].Sum(m => m.Protein);
+                                DaySummaries[day] = new DaySummary
+                                {
+                                    TotalCalories = totalCalories,
+                                    TotalProtein = totalProtein
+                                };
+
+                                // Regenerate PDF
+                                try
+                                {
+                                    GenerateReportPDF();
+                                }
+                                catch { }
+
+                                return new JsonResult(new { success = true, meal = newMeal, daySummary = DaySummaries[day], pdfUrl = PdfUrl });
+                            }
+                        }
+                    }
+                }
+
+                return new JsonResult(new { success = false, error = "Alimentul nu a fost gasit." });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new { success = false, error = ex.Message });
+            }
+        }
+
         private double CalculateBMR(string sex, double weight, int height, int age)
         {
             // Formula Mifflin-St Jeor
@@ -344,6 +413,95 @@ namespace proiect.web.Pages
             return null;
         }
 
+        private List<MealInfo> GetAlternativeFoods(int currentFoodId, string mealType)
+        {
+            var alternatives = new List<MealInfo>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                try
+                {
+                    connection.Open();
+
+                    // First get the current food to know its calorie range
+                    var currentFoodCommand = new SqlCommand(
+                        @"SELECT calories FROM foods WHERE id = @Id", connection);
+                    currentFoodCommand.Parameters.AddWithValue("@Id", currentFoodId);
+
+                    double currentCalories = 0;
+                    using (var reader = currentFoodCommand.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            currentCalories = double.Parse(reader["calories"].ToString());
+                        }
+                    }
+
+                    // Get alternative foods with similar calories (±150 kcal) and same meal type
+                    var command = new SqlCommand(
+                        @"SELECT TOP 5 id, name, calories, protein, meal_type 
+                          FROM foods 
+                          WHERE meal_type = @MealType 
+                            AND id != @CurrentId
+                            AND calories BETWEEN @MinCal AND @MaxCal
+                          ORDER BY NEWID()", connection);
+
+                    command.Parameters.AddWithValue("@MealType", mealType);
+                    command.Parameters.AddWithValue("@CurrentId", currentFoodId);
+                    command.Parameters.AddWithValue("@MinCal", Math.Max(0, currentCalories - 150));
+                    command.Parameters.AddWithValue("@MaxCal", currentCalories + 150);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            alternatives.Add(new MealInfo
+                            {
+                                Id = (int)reader["id"],
+                                Name = reader["name"].ToString(),
+                                Calories = double.Parse(reader["calories"].ToString()),
+                                Protein = double.Parse(reader["protein"].ToString()),
+                                MealType = reader["meal_type"].ToString()
+                            });
+                        }
+                    }
+
+                    // If no alternatives found in calorie range, get any from same meal type
+                    if (alternatives.Count == 0)
+                    {
+                        var fallbackCommand = new SqlCommand(
+                            @"SELECT TOP 5 id, name, calories, protein, meal_type 
+                              FROM foods 
+                              WHERE meal_type = @MealType AND id != @CurrentId
+                              ORDER BY NEWID()", connection);
+                        fallbackCommand.Parameters.AddWithValue("@MealType", mealType);
+                        fallbackCommand.Parameters.AddWithValue("@CurrentId", currentFoodId);
+
+                        using (var reader = fallbackCommand.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                alternatives.Add(new MealInfo
+                                {
+                                    Id = (int)reader["id"],
+                                    Name = reader["name"].ToString(),
+                                    Calories = double.Parse(reader["calories"].ToString()),
+                                    Protein = double.Parse(reader["protein"].ToString()),
+                                    MealType = reader["meal_type"].ToString()
+                                });
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log error but return empty list
+                }
+            }
+
+            return alternatives;
+        }
+
         private void GenerateReportPDF()
         {
             // Ensure wwwroot directory exists
@@ -515,7 +673,7 @@ namespace proiect.web.Pages
             // Dupa trimiterea email-ului, afiseaza din nou planul alimentar daca exista
             if (HasCalculated)
             {
-                OnPost();
+                return OnPostGeneratePlan();
             }
 
             return Page();
