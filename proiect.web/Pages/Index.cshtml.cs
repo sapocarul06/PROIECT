@@ -177,8 +177,8 @@ namespace proiect.web.Pages
             // Save the meal plan to TempData for later use in swap operations
             TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
             TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
-            TempData["DailyCalories"] = dailyCalories;
-            TempData["TargetProteins"] = TargetProteins;
+            TempData["DailyCalories"] = dailyCalories.ToString();
+            TempData["TargetProteins"] = TargetProteins.ToString();
             TempData["HasCalculated"] = true;
             TempData["ResultSummary"] = ResultSummary;
             TempData["PdfUrl"] = PdfUrl;
@@ -297,8 +297,8 @@ namespace proiect.web.Pages
                                     // Save updated plan to TempData
                                     TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
                                     TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
-                                    TempData["DailyCalories"] = dailyCalories;
-                                    TempData["TargetProteins"] = targetProteins;
+                                    TempData["DailyCalories"] = dailyCalories.ToString();
+                                    TempData["TargetProteins"] = targetProteins.ToString();
                                     TempData["HasCalculated"] = true;
                                     TempData["ResultSummary"] = ResultSummary;
                                     TempData["PdfUrl"] = PdfUrl;
