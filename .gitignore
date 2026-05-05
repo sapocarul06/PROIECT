@@ -5,26 +5,25 @@ obj/
 *.dll
 *.exe
 *.pdb
-*.nupkg
-**/Debug/
-**/Release/
+*.config
+*.log
 
 # Dependencies
 packages/
 node_modules/
 
-# Logs
-*.log
+# User-specific files
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.csproj.user
 
-# Environment
+# Environment specific
 .env
 .env.local
 *.env.*
-
-# Editors
-.vscode/
-.idea/
-*.userprefs
 
 # OS generated files
 .DS_Store
