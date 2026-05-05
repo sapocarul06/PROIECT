@@ -6,7 +6,8 @@ obj/
 *.exe
 *.pdb
 *.config
-*.csproj.user
+*.manifest
+*.nupkg
 
 # Dependencies
 packages/
@@ -26,10 +27,7 @@ node_modules/
 *.swp
 *.swo
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Testing
-TestResults/
 ```

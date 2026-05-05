@@ -366,10 +366,9 @@
 
     <div class="card">
         <h2>⚙️ Seteaza Obiectivul Tau</h2>
-
-        @Html.AntiForgeryToken()
         
         <form method="post" asp-page-handler="GeneratePlan">
+            @Html.AntiForgeryToken()
             <div class="form-row">
                 <div class="form-group">
                     <label>Sex</label>
@@ -419,6 +418,7 @@
 
         </form>
         <form method="post" asp-page-handler="SendEmail">
+            @Html.AntiForgeryToken()
             <div class="form-group" style="margin-top:20px;">
                 <label>📧 Vrei sa fii la curent cu toate noutatile noastre?</label>
                 <input asp-for="EmailDestinatar" type="email" placeholder="ex: nume@email.com" />
