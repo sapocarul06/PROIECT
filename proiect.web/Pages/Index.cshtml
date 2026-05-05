@@ -499,15 +499,16 @@
 
                                             @foreach (var meal in group)
                                             {
+                                                var mealIndex = Model.WeeklyPlan[day].IndexOf(meal);
                                                 <div class="meal-item" 
                                                      data-food-id="@meal.Id" 
                                                      data-day="@day" 
-                                                     data-meal-index="@WeeklyPlan[day].IndexOf(meal)"
+                                                     data-meal-index="@mealIndex"
                                                      onmouseenter="showSwapButton(this)" 
                                                      onmouseleave="hideSwapButton(this)">
                                                     <div class="meal-name">@meal.Name</div>
                                                     <div class="meal-details">@meal.Calories.ToString("F0") kcal | @meal.Protein.ToString("F1")g proteina</div>
-                                                    <button class="btn-swap" onclick="openSwapModal(@meal.Id, '@meal.MealType', @day, @WeeklyPlan[day].IndexOf(meal))" style="display:none;">
+                                                    <button class="btn-swap" onclick="openSwapModal(@meal.Id, '@meal.MealType', @day, @mealIndex)" style="display:none;">
                                                         🔄 Nu îmi place, altceva
                                                     </button>
                                                 </div>

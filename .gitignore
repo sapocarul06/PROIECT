@@ -1,24 +1,47 @@
 ```
 # Build artifacts
-bin/
 obj/
+bin/
 *.dll
 *.exe
 *.pdb
 *.config
+*.manifest
+*.nupkg
+packages/
 
 # Dependencies
-packages/
+node_modules/
+vendor/
 
 # Logs
 *.log
 
-# User-specific files
-.vs/
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Testing
+TestResults/
+
+# NuGet
 *.user
 *.userosscache
-*.suo
+*.sln.docstates
 
-# Environment specific
-.vscode/
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.VC.opendb
 ```
