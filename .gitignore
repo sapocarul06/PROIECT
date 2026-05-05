@@ -1,18 +1,15 @@
 ```
 # Build artifacts
-obj/
 bin/
+obj/
 *.dll
 *.exe
 *.pdb
 *.config
-*.manifest
-*.nupkg
-packages/
 
 # Dependencies
+packages/
 node_modules/
-vendor/
 
 # Logs
 *.log
@@ -20,7 +17,7 @@ vendor/
 # Environment
 .env
 .env.local
-.env.*
+*.env.*
 
 # Editors
 .vscode/
@@ -32,16 +29,12 @@ vendor/
 .DS_Store
 Thumbs.db
 
-# Testing
-TestResults/
-
-# NuGet
+# User-specific files
+.vs/
 *.user
 *.userosscache
-*.sln.docstates
+*.suo
 
-# Visual Studio
-.vs/
-*.VC.db
-*.VC.VC.opendb
+# Web files
+wwwroot/
 ```

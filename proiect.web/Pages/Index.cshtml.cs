@@ -8,6 +8,8 @@ using Microsoft.Data.SqlClient;
 using System.Net;
 using System.Net.Mail;
 using System.Reflection.Metadata;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Http;
 
 namespace proiect.web.Pages
 {
@@ -15,6 +17,7 @@ namespace proiect.web.Pages
     {
         private readonly string _connectionString = @"Server=(localdb)\MSSQLLocalDB;Database=PlanAlimentarDB;Trusted_Connection=True;TrustServerCertificate=True;";
         private readonly IWebHostEnvironment _env;
+        private readonly IAntiforgery _antiforgery;
 
         [BindProperty]
         public string Sex { get; set; }
@@ -48,9 +51,10 @@ namespace proiect.web.Pages
         public Dictionary<int, List<MealInfo>> WeeklyPlan { get; set; } = new();
         public Dictionary<int, DaySummary> DaySummaries { get; set; } = new();
 
-        public IndexModel(IWebHostEnvironment env)
+        public IndexModel(IWebHostEnvironment env, IAntiforgery antiforgery)
         {
             _env = env;
+            _antiforgery = antiforgery;
         }
 
         public void OnGet()
@@ -153,12 +157,14 @@ namespace proiect.web.Pages
             return Page();
         }
 
+        [IgnoreAntiforgeryToken]
         public JsonResult OnGetAlternatives(int foodId, string mealType)
         {
             var alternatives = GetAlternativeFoods(foodId, mealType);
             return new JsonResult(alternatives);
         }
 
+        [IgnoreAntiforgeryToken]
         public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId)
         {
             try
