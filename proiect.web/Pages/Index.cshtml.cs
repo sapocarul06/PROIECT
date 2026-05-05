@@ -59,6 +59,17 @@ namespace proiect.web.Pages
 
         public void OnGet()
         {
+            // Restore meal plan from TempData if available (after swap operation)
+            if (TempData["WeeklyPlan"] != null)
+            {
+                WeeklyPlan = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, List<MealInfo>>>(TempData["WeeklyPlan"].ToString());
+                DaySummaries = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, DaySummary>>(TempData["DaySummaries"].ToString());
+                DailyCalories = double.Parse(TempData["DailyCalories"].ToString());
+                TargetProteins = double.Parse(TempData["TargetProteins"].ToString());
+                HasCalculated = bool.Parse(TempData["HasCalculated"].ToString());
+                ResultSummary = TempData["ResultSummary"].ToString();
+                PdfUrl = TempData["PdfUrl"].ToString();
+            }
         }
 
         public IActionResult OnPostGeneratePlan()
@@ -153,6 +164,15 @@ namespace proiect.web.Pages
                 PdfUrl = string.Empty;
             }
 
+            // Save the meal plan to TempData for later use in swap operations
+            TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
+            TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
+            TempData["DailyCalories"] = dailyCalories;
+            TempData["TargetProteins"] = TargetProteins;
+            TempData["HasCalculated"] = true;
+            TempData["ResultSummary"] = ResultSummary;
+            TempData["PdfUrl"] = PdfUrl;
+
             MessageResult = $"Planul tau alimentar personalizat a fost generat!";
             return Page();
         }
@@ -165,7 +185,7 @@ namespace proiect.web.Pages
         }
 
         [IgnoreAntiforgeryToken]
-        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId, int originalFoodId, string mealType)
+        public JsonResult OnPostSwapFood(int day, int mealIndex, int newFoodId, int originalFoodId, string mealType, double dailyCalories, double targetProteins)
         {
             try
             {
@@ -217,6 +237,23 @@ namespace proiect.web.Pages
                                 
                                 if (foundIndex >= 0 && foundIndex < dayMeals.Count)
                                 {
+                                    // Check for duplicates in the same day before swapping
+                                    var usedFoodNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                                    
+                                    for (int i = 0; i < dayMeals.Count; i++)
+                                    {
+                                        if (i != foundIndex) // Skip the food we're replacing
+                                        {
+                                            usedFoodNames.Add(dayMeals[i].Name.ToLower());
+                                        }
+                                    }
+                                    
+                                    // Check if the new food would create a duplicate
+                                    if (usedFoodNames.Contains(newMeal.Name.ToLower()))
+                                    {
+                                        return new JsonResult(new { success = false, error = "Acest aliment este deja prezent in planul zilei. Alegeti alta alternativa." });
+                                    }
+                                    
                                     // Replace the food at the found index with the new food
                                     dayMeals[foundIndex] = newMeal;
 
@@ -234,6 +271,15 @@ namespace proiect.web.Pages
                                         GenerateReportPDF();
                                     }
                                     catch { }
+
+                                    // Save updated plan to TempData
+                                    TempData["WeeklyPlan"] = System.Text.Json.JsonSerializer.Serialize(WeeklyPlan);
+                                    TempData["DaySummaries"] = System.Text.Json.JsonSerializer.Serialize(DaySummaries);
+                                    TempData["DailyCalories"] = dailyCalories;
+                                    TempData["TargetProteins"] = targetProteins;
+                                    TempData["HasCalculated"] = true;
+                                    TempData["ResultSummary"] = ResultSummary;
+                                    TempData["PdfUrl"] = PdfUrl;
 
                                     return new JsonResult(new { success = true, meal = newMeal, daySummary = DaySummaries[day], pdfUrl = PdfUrl });
                                 }

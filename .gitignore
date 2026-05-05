@@ -6,26 +6,30 @@ obj/
 *.exe
 *.pdb
 *.config
-*.log
+*.csproj.user
 
 # Dependencies
 packages/
 node_modules/
 
-# User-specific files
-.vs/
-.vscode/
-*.user
-*.userosscache
-*.suo
-*.csproj.user
+# Logs
+*.log
 
-# Environment specific
+# Environment
 .env
 .env.local
 *.env.*
 
-# OS generated files
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Testing
+TestResults/
 ```
