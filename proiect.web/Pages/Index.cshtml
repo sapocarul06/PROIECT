@@ -367,6 +367,8 @@
     <div class="card">
         <h2>⚙️ Seteaza Obiectivul Tau</h2>
 
+        @Html.AntiForgeryToken()
+        
         <form method="post" asp-page-handler="GeneratePlan">
             <div class="form-row">
                 <div class="form-group">
@@ -444,6 +446,9 @@
 
     @if (Model.HasCalculated)
     {
+        <!-- CSRF Token pentru request-uri AJAX -->
+        <input type="hidden" id="csrfToken" value="@Model.HttpContext.Antiforgery.GetAndStoreTokens(Model.HttpContext).RequestToken" />
+        
         <div class="result-card">
             @if (!string.IsNullOrEmpty(Model.ErrorMessage))
             {
@@ -619,7 +624,7 @@
                 const response = await fetch('?handler=SwapFood', {
                     method: 'POST',
                     headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        'RequestVerificationToken': document.getElementById('csrfToken').value
                     },
                     body: formData
                 });
